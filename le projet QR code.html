@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOHA - QR Codes et PDF</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2a4365;
+            --secondary-color: #1e365d;
+            --accent-color: #4299e1;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4bb543;
+            --error-color: #ff3333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        header .logo {
+            height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            opacity: 0.7;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .tab-button:hover {
+            opacity: 1;
+        }
+
+        .tab-button.active {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-section, .scan-section, .pdf-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .input-options, .scan-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .option-btn, .scan-option-btn {
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option-btn:hover, .scan-option-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .option-btn.active, .scan-option-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .input-field {
+            display: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-field.active {
+            display: block;
+        }
+
+        textarea, input[type="url"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            resize: vertical;
+        }
+
+        textarea:focus, input[type="url"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .image-upload, .pdf-upload {
+            text-align: center;
+            padding: 2rem;
+            border: 2px dashed #ddd;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .image-upload:hover, .pdf-upload:hover {
+            border-color: var(--primary-color);
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+        }
+
+        .upload-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .qr-options, .pdf-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .qr-options label, .pdf-options label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .qr-options select, .qr-options input[type="color"], 
+        .pdf-options select, .pdf-options input[type="color"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-btn.secondary {
+            background-color: #6c757d;
+        }
+
+        .action-btn.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .result-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        .qr-container {
+            margin: 0 auto 1.5rem;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            display: inline-block;
+            background: white;
+        }
+
+        .qr-actions, .pdf-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .camera-view, .upload-view, .pdf-preview {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        #reader {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        #uploadCanvas, #pdfPreviewCanvas {
+            max-width: 100%;
+            margin-top: 1rem;
+            border-radius: var(--border-radius);
+        }
+
+        .scan-result, .pdf-result {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .scan-result h3, .pdf-result h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .result-content {
+            padding: 1rem;
+            background: white;
+            border-radius: var(--border-radius);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .pdf-pages {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 1.5rem;
+        }
+
+        .pdf-page {
+            position: relative;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .pdf-page img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .pdf-page-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .pdf-page-btn {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+            background-color: var(--dark-color);
+            color: white;
+        }
+
+        footer .legal {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        /* Message Box */
+        .message-box {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-box.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .message-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .message-box.active .message-content {
+            transform: translateY(0);
+        }
+
+        .message-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .message-content ul {
+            margin: 1rem 0 1.5rem 1.5rem;
+        }
+
+        .message-content li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-content button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .message-content button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 5px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .qr-options, .pdf-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .qr-actions, .pdf-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pdf-pages {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            header p {
+                font-size: 1rem;
+            }
+            
+            .input-section, .scan-section, .result-section, .pdf-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Message Box d'introduction -->
+    <div class="message-box" id="messageBox">
+        <div class="message-content">
+            <h2><i class="fas fa-star feature-icon"></i>Bienvenue sur LOHA Solutions</h2>
+            <p>Découvrez nos fonctionnalités premium :</p>
+            <ul>
+                <li><i class="fas fa-qrcode feature-icon"></i><strong>Génération & lecture de QR codes</strong> - Texte, URLs et images</li>
+                <li><i class="fas fa-file-pdf feature-icon"></i><strong>Conversion de documents en PDF</strong> - Jusqu'à 1000 pages</li>
+            </ul>
+            <p>Toutes ces fonctionnalités sont 100% gratuites et sans compte utilisateur !</p>
+            <button id="closeMessageBox">Commencer</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="logo-placeholder" style="color: white; font-size: 2rem; margin-bottom: 1rem;">LOHA</div>
+            <h1>LOHA Solutions Professionnelles</h1>
+            <p>QR Codes et PDF</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="tabs">
+            <button class="tab-button active" data-tab="generate">Générer QR Code</button>
+            <button class="tab-button" data-tab="scan">Scanner QR Code</button>
+            <button class="tab-button" data-tab="pdf">Créer PDF</button>
+        </div>
+
+        <!-- Onglet Génération QR Code -->
+        <div class="tab-content active" id="generate">
+            <div class="input-section">
+                <div class="input-options">
+                    <button class="option-btn active" data-type="text">Texte</button>
+                    <button class="option-btn" data-type="url">URL</button>
+                    <button class="option-btn" data-type="image">Image</button>
+                </div>
+
+                <div class="input-fields">
+                    <!-- Champ Texte -->
+                    <div class="input-field active" data-type="text">
+                        <textarea id="textInput" placeholder="Entrez votre texte ici... (jusqu'à 3000 caractères)"></textarea>
+                        <div class="progress-bar">
+                            <div class="progress" id="charProgress"></div>
+                        </div>
+                        <small id="charCount">0/3000 caractères</small>
+                    </div>
+
+                    <!-- Champ URL -->
+                    <div class="input-field" data-type="url">
+                        <input type="url" id="urlInput" placeholder="https://example.com">
+                    </div>
+
+                    <!-- Champ Image -->
+                    <div class="input-field" data-type="image">
+                        <div class="image-upload">
+                            <label for="fileInput" class="upload-btn">
+                                <i class="fas fa-cloud-upload-alt"></i> Choisir une image
+                            </label>
+                            <input type="file" id="fileInput" accept="image/*">
+                            <p>ou</p>
+                            <input type="url" id="imageUrlInput" placeholder="URL de l'image">
+                        </div>
+                    </div>
+
+                    <div class="qr-options">
+                        <label for="qrSize">Taille :</label>
+                        <select id="qrSize">
+                            <option value="100">100x100</option>
+                            <option value="200" selected>200x200</option>
+                            <option value="300">300x300</option>
+                            <option value="400">400x400</option>
+                        </select>
+
+                        <label for="qrColor">Couleur :</label>
+                        <input type="color" id="qrColor" value="#000000">
+
+                        <label for="qrBgColor">Fond :</label>
+                        <input type="color" id="qrBgColor" value="#ffffff">
+                    </div>
+
+                    <button id="generateBtn" class="action-btn">Générer QR Code</button>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <div class="qr-container" id="qrContainer">
+                    <canvas id="qrCanvas"></canvas>
+                </div>
+                <div class="qr-actions">
+                    <button id="downloadBtn" class="action-btn" disabled>
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                    <button id="shareBtn" class="action-btn" disabled>
+                        <i class="fas fa-share-alt"></i> Partager
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Scanner QR Code -->
+        <div class="tab-content" id="scan">
+            <div class="scan-options">
+                <button class="scan-option-btn active" data-scan="camera">
+                    <i class="fas fa-camera"></i> Utiliser la caméra
+                </button>
+                <button class="scan-option-btn" data-scan="upload">
+                    <i class="fas fa-upload"></i> Uploader une image
+                </button>
+            </div>
+
+            <div class="scan-section">
+                <div class="camera-view" id="cameraView">
+                    <div id="reader" style="width: 100%;"></div>
+                    <button id="stopCameraBtn" class="action-btn hidden">
+                        <i class="fas fa-stop"></i> Arrêter la caméra
+                    </button>
+                </div>
+
+                <div class="upload-view hidden" id="uploadView">
+                    <label for="scanFileInput" class="upload-btn">
+                        <i class="fas fa-cloud-upload-alt"></i> Choisir une image contenant un QR Code
+                    </label>
+                    <input type="file" id="scanFileInput" accept="image/*">
+                    <canvas id="uploadCanvas" class="hidden"></canvas>
+                </div>
+
+                <div class="scan-result" id="scanResult">
+                    <h3>Résultat du scan :</h3>
+                    <div class="result-content" id="resultContent">
+                        <p>Aucun QR code scanné pour le moment.</p>
+                    </div>
+                    <div class="result-actions hidden" id="resultActions">
+                        <button id="copyResultBtn" class="action-btn">
+                            <i class="fas fa-copy"></i> Copier
+                        </button>
+                        <button id="openResultBtn" class="action-btn">
+                            <i class="fas fa-external-link-alt"></i> Ouvrir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Création PDF -->
+        <div class="tab-content" id="pdf">
+            <div class="pdf-section">
+                <div class="pdf-upload">
+                    <label for="pdfFileInput" class="upload-btn">
+                        <i class="fas fa-cloud-upload-alt"></i> Ajouter des fichiers (images ou PDF)
+                    </label>
+                    <input type="file" id="pdfFileInput" accept="image/*,.pdf" multiple>
+                    <p class="small">Vous pouvez sélectionner plusieurs fichiers à la fois (max 1000 pages)</p>
+                </div>
+
+                <div class="pdf-options">
+                    <label for="pdfOrientation">Orientation :</label>
+                    <select id="pdfOrientation">
+                        <option value="portrait">Portrait</option>
+                        <option value="landscape">Paysage</option>
+                    </select>
+
+                    <label for="pdfSize">Format :</label>
+                    <select id="pdfSize">
+                        <option value="a4">A4</option>
+                        <option value="letter">Letter</option>
+                        <option value="a5">A5</option>
+                    </select>
+                </div>
+
+                <div class="pdf-preview">
+                    <h3>Pages du document :</h3>
+                    <div class="pdf-pages" id="pdfPages">
+                        <p>Aucune page ajoutée pour le moment.</p>
+                    </div>
+                </div>
+
+                <div class="pdf-result">
+                    <div class="pdf-actions">
+                        <button id="generatePdfBtn" class="action-btn" disabled>
+                            <i class="fas fa-file-pdf"></i> Générer PDF
+                        </button>
+                        <button id="clearPdfBtn" class="action-btn secondary">
+                            <i class="fas fa-trash"></i> Tout effacer
+                        </button>
+                    </div>
+                    <div class="progress-bar hidden" id="pdfProgressBar">
+                        <div class="progress" id="pdfProgress"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="currentYear"></span> LOHA - Tous droits réservés à Akiti Losseni</p>
+            <p class="legal">Cet outil est la propriété exclusive de LOHA. Toute reproduction ou utilisation non autorisée est strictement interdite.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const { jsPDF } = window.jspdf;
+            let html5QrCode = null;
+            let currentQRCode = null;
+            let pdfPages = [];
+
+            // Afficher la message box au chargement
+            const messageBox = document.getElementById('messageBox');
+            if (!localStorage.getItem('messageShown')) {
+                messageBox.classList.add('active');
+                localStorage.setItem('messageShown', 'true');
+            }
+
+            // Fermer la message box
+            document.getElementById('closeMessageBox').addEventListener('click', function() {
+                messageBox.classList.remove('active');
+            });
+
+            // Mettre à jour l'année dans le footer
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+            // Gestion des onglets
+            setupTabs();
+
+            // Gestion des options de génération QR
+            setupGenerationOptions();
+
+            // Gestion des options de scan
+            setupScanOptions();
+
+            // Gestion de la création de PDF
+            setupPdfCreation();
+
+            // Compteur de caractères pour le texte
+            document.getElementById('textInput').addEventListener('input', updateCharacterCount);
+
+            // Fonctions principales
+            function setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const tabId = this.getAttribute('data-tab');
+                        
+                        // Désactiver tous les boutons et contenus
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        
+                        // Activer le bouton et le contenu sélectionnés
+                        this.classList.add('active');
+                        document.getElementById(tabId).classList.add('active');
+                        
+                        // Arrêter la caméra si on quitte l'onglet scan
+                        if (tabId !== 'scan' && html5QrCode) {
+                            html5QrCode.stop().catch(err => console.log(err));
+                            document.getElementById('stopCameraBtn').classList.add('hidden');
+                        }
+                    });
+                });
+            }
+
+            function updateCharacterCount() {
+                const textInput = document.getElementById('textInput');
+                const charCount = document.getElementById('charCount');
+                const charProgress = document.getElementById('charProgress');
+                
+                const text = textInput.value;
+                const currentLength = text.length;
+                const maxLength = 3000; // Nouvelle limite
+                
+                // Mise à jour du compteur
+                charCount.textContent = `${currentLength}/${maxLength} caractères`;
+                charProgress.style.width = `${Math.min(100, (currentLength / maxLength) * 100)}%`;
+                
+                // Changement de couleur si approche de la limite
+                if (currentLength > maxLength) {
+                    charProgress.style.backgroundColor = 'var(--error-color)';
+                    charCount.style.color = 'var(--error-color)';
+                } else if (currentLength > maxLength * 0.9) {
+                    charProgress.style.backgroundColor = 'orange';
+                    charCount.style.color = 'orange';
+                } else {
+                    charProgress.style.backgroundColor = 'var(--primary-color)';
+                    charCount.style.color = 'inherit';
+                }
+            }
+
+            function setupGenerationOptions() {
+                const optionButtons = document.querySelectorAll('.option-btn');
+                const inputFields = document.querySelectorAll('.input-field');
+                
+                optionButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const type = this.getAttribute('data-type');
+                        
+                        // Désactiver tous les boutons et champs
+                        optionButtons.forEach(btn => btn.classList.remove('active'));
+                        inputFields.forEach(field => field.classList.remove('active'));
+                        
+                        // Activer le bouton et le champ sélectionnés
+                        this.classList.add('active');
+                        document.querySelector(`.input-field[data-type="${type}"]`).classList.add('active');
+                    });
+                });
+
+                // Générer un QR Code
+                document.getElementById('generateBtn').addEventListener('click', generateQRCode);
+                
+                // Télécharger le QR code
+                document.getElementById('downloadBtn').addEventListener('click', function() {
+                    if (!currentQRCode) return;
+                    
+                    const link = document.createElement('a');
+                    link.href = currentQRCode;
+                    link.download = 'loha-qr-code.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+                
+                // Partager le QR code
+                document.getElementById('shareBtn').addEventListener('click', async function() {
+                    if (!currentQRCode) return;
+                    
+                    try {
+                        // Convertir DataURL en Blob
+                        const blob = await fetch(currentQRCode).then(res => res.blob());
+                        const file = new File([blob], 'loha-qr-code.png', { type: 'image/png' });
+                        
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                title: 'LOHA QR Code',
+                                text: 'Voici le QR code généré avec LOHA QR Solutions',
+                                files: [file]
+                            });
+                        } else {
+                            // Fallback pour les navigateurs qui ne supportent pas le partage de fichiers
+                            const link = document.createElement('a');
+                            link.href = currentQRCode;
+                            link.target = '_blank';
+                            link.click();
+                        }
+                    } catch (err) {
+                        console.error('Erreur de partage:', err);
+                        // Fallback simple
+                        const link = document.createElement('a');
+                        link.href = currentQRCode;
+                        link.target = '_blank';
+                        link.click();
+                    }
+                });
+            }
+
+            function generateQRCode() {
+                const activeOption = document.querySelector('.option-btn.active').getAttribute('data-type');
+                const qrSize = parseInt(document.getElementById('qrSize').value);
+                const qrColor = document.getElementById('qrColor').value;
+                const qrBgColor = document.getElementById('qrBgColor').value;
+                
+                const qrCanvas = document.getElementById('qrCanvas');
+                const ctx = qrCanvas.getContext('2d');
+                const qrContainer = document.getElementById('qrContainer');
+                const downloadBtn = document.getElementById('downloadBtn');
+                const shareBtn = document.getElementById('shareBtn');
+                
+                qrCanvas.width = qrSize;
+                qrCanvas.height = qrSize;
+                
+                let content = '';
+                
+                switch(activeOption) {
+                    case 'text':
+                        content = document.getElementById('textInput').value.trim();
+                        if (!content) {
+                            alert("Veuillez entrer du texte pour générer le QR code.");
+                            return;
+                        }
+                        if (content.length > 3000) {
+                            if (confirm(`Votre texte dépasse 3000 caractères (${content.length}). Voulez-vous le diviser en plusieurs QR codes ?`)) {
+                                splitTextToMultipleQRCodes(content);
+                                return;
+                            } else {
+                                return;
+                            }
+                        }
+                        break;
+                    case 'url':
+                        let url = document.getElementById('urlInput').value.trim();
+                        if (!url) {
+                            alert("Veuillez entrer une URL pour générer le QR code.");
+                            return;
+                        }
+                        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                            url = 'https://' + url;
+                        }
+                        content = url;
+                        break;
+                    case 'image':
+                        const fileInput = document.getElementById('fileInput');
+                        const imageUrl = document.getElementById('imageUrlInput').value.trim();
+                        
+                        if (fileInput.files.length > 0) {
+                            const file = fileInput.files[0];
+                            const reader = new FileReader();
+                            
+                            reader.onload = function(e) {
+                                const img = new Image();
+                                img.onload = function() {
+                                    // Générer un contenu unique pour le QR code
+                                    const uniqueId = 'LOHA-IMG-' + Date.now();
+                                    createQRCodeWithImage(uniqueId, qrSize, qrColor, qrBgColor, img);
+                                    
+                                    // Stocker l'image dans localStorage pour la retrouver lors du scan
+                                    localStorage.setItem(uniqueId, e.target.result);
+                                };
+                                img.src = e.target.result;
+                            };
+                            
+                            reader.readAsDataURL(file);
+                            return;
+                        } else if (imageUrl) {
+                            const img = new Image();
+                            img.crossOrigin = 'Anonymous';
+                            img.onload = function() {
+                                // Générer un contenu unique pour le QR code
+                                const uniqueId = 'LOHA-IMG-' + Date.now();
+                                createQRCodeWithImage(uniqueId, qrSize, qrColor, qrBgColor, img);
+                                
+                                // Stocker l'image dans localStorage
+                                const canvas = document.createElement('canvas');
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0);
+                                localStorage.setItem(uniqueId, canvas.toDataURL('image/png'));
+                            };
+                            img.onerror = function() {
+                                alert("Impossible de charger l'image à partir de l'URL fournie.");
+                            };
+                            img.src = imageUrl;
+                            return;
+                        } else {
+                            alert("Veuillez sélectionner une image ou fournir une URL d'image.");
+                            return;
+                        }
+                }
+                
+                // Générer un QR code simple sans image
+                QRCode.toCanvas(qrCanvas, content, {
+                    width: qrSize,
+                    color: {
+                        dark: qrColor,
+                        light: qrBgColor
+                    },
+                    margin: 2
+                }, function(error) {
+                    if (error) {
+                        console.error(error);
+                        alert("Une erreur est survenue lors de la génération du QR code.");
+                        return;
+                    }
+                    
+                    currentQRCode = qrCanvas.toDataURL('image/png');
+                    downloadBtn.disabled = false;
+                    shareBtn.disabled = false;
+                    
+                    // Animation
+                    qrContainer.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        qrContainer.style.transform = 'scale(1)';
+                    }, 100);
+                });
+            }
+            
+            function splitTextToMultipleQRCodes(text) {
+                const chunkSize = 3000;
+                const chunks = [];
+                
+                for (let i = 0; i < text.length; i += chunkSize) {
+                    chunks.push(text.substring(i, i + chunkSize));
+                }
+                
+                // Générer un QR code pour chaque chunk
+                chunks.forEach((chunk, index) => {
+                    setTimeout(() => {
+                        // Créer un canvas temporaire
+                        const tempCanvas = document.createElement('canvas');
+                        const qrSize = parseInt(document.getElementById('qrSize').value);
+                        const qrColor = document.getElementById('qrColor').value;
+                        const qrBgColor = document.getElementById('qrBgColor').value;
+                        
+                        QRCode.toCanvas(tempCanvas, chunk, {
+                            width: qrSize,
+                            color: {
+                                dark: qrColor,
+                                light: qrBgColor
+                            }
+                        }, (error) => {
+                            if (!error) {
+                                // Téléchargement automatique
+                                const link = document.createElement('a');
+                                link.href = tempCanvas.toDataURL('image/png');
+                                link.download = `loha-qr-part-${index + 1}-of-${chunks.length}.png`;
+                                link.click();
+                            }
+                        });
+                    }, index * 1000); // Délai pour éviter le blocage UI
+                });
+                
+                alert(`${chunks.length} QR codes vont être générés et téléchargés automatiquement.`);
+            }
+            
+            function createQRCodeWithImage(content, size, color, bgColor, image) {
+                const qrCanvas = document.getElementById('qrCanvas');
+                const ctx = qrCanvas.getContext('2d');
+                const downloadBtn = document.getElementById('downloadBtn');
+                const shareBtn = document.getElementById('shareBtn');
+                const qrContainer = document.getElementById('qrContainer');
+                
+                // Créer un canvas temporaire pour le QR code
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = size;
+                tempCanvas.height = size;
+                
+                QRCode.toCanvas(tempCanvas, content, {
+                    width: size,
+                    color: {
+                        dark: color,
+                        light: bgColor
+                    },
+                    margin: 2
+                }, function(error) {
+                    if (error) {
+                        console.error(error);
+                        alert("Une erreur est survenue lors de la génération du QR code.");
+                        return;
+                    }
+                    
+                    // Dessiner l'image au centre du QR code
+                    const tempCtx = tempCanvas.getContext('2d');
+                    const imgSize = size * 0.3; // Taille de l'image (30% du QR code)
+                    const center = (size - imgSize) / 2;
+                    
+                    // Dessiner un fond blanc pour l'image
+                    tempCtx.fillStyle = bgColor;
+                    tempCtx.fillRect(center - 5, center - 5, imgSize + 10, imgSize + 10);
+                    
+                    // Dessiner l'image
+                    tempCtx.drawImage(image, center, center, imgSize, imgSize);
+                    
+                    // Copier sur le canvas principal
+                    ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+                    ctx.drawImage(tempCanvas, 0, 0);
+                    
+                    currentQRCode = qrCanvas.toDataURL('image/png');
+                    downloadBtn.disabled = false;
+                    shareBtn.disabled = false;
+                    
+                    // Animation
+                    qrContainer.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        qrContainer.style.transform = 'scale(1)';
+                    }, 100);
+                });
+            }
+
+            function setupScanOptions() {
+                const scanOptionButtons = document.querySelectorAll('.scan-option-btn');
+                const cameraView = document.getElementById('cameraView');
+                const uploadView = document.getElementById('uploadView');
+                
+                scanOptionButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const scanType = this.getAttribute('data-scan');
+                        
+                        // Désactiver tous les boutons et vues
+                        scanOptionButtons.forEach(btn => btn.classList.remove('active'));
+                        cameraView.classList.add('hidden');
+                        uploadView.classList.add('hidden');
+                        
+                        // Activer le bouton et la vue sélectionnés
+                        this.classList.add('active');
+                        
+                        if (scanType === 'camera') {
+                            cameraView.classList.remove('hidden');
+                            startCamera();
+                        } else {
+                            uploadView.classList.remove('hidden');
+                            if (html5QrCode) {
+                                html5QrCode.stop().catch(err => console.log(err));
+                                document.getElementById('stopCameraBtn').classList.add('hidden');
+                            }
+                        }
+                    });
+                });
+
+                // Scanner un QR code avec la caméra
+                function startCamera() {
+                    // Si déjà initialisé, ne rien faire
+                    if (html5QrCode) return;
+                    
+                    html5QrCode = new Html5Qrcode("reader");
+                    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                        handleScanResult(decodedText);
+                    };
+                    
+                    const config = { 
+                        fps: 10, 
+                        qrbox: { width: 250, height: 250 } 
+                    };
+                    
+                    html5QrCode.start(
+                        { facingMode: "environment" }, 
+                        config, 
+                        qrCodeSuccessCallback, 
+                        () => {} // Callback d'erreur vide
+                    ).catch(err => {
+                        console.error(err);
+                        alert("Impossible d'accéder à la caméra. Vérifiez les permissions.");
+                    });
+                    
+                    document.getElementById('stopCameraBtn').classList.remove('hidden');
+                }
+                
+                // Arrêter la caméra
+                document.getElementById('stopCameraBtn').addEventListener('click', function() {
+                    if (html5QrCode) {
+                        html5QrCode.stop().then(() => {
+                            html5QrCode = null;
+                            this.classList.add('hidden');
+                        }).catch(err => {
+                            console.error(err);
+                        });
+                    }
+                });
+                
+                // Scanner un QR code à partir d'une image uploadée
+                document.getElementById('scanFileInput').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const uploadCanvas = document.getElementById('uploadCanvas');
+                    const uploadCtx = uploadCanvas.getContext('2d');
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        uploadCanvas.width = img.width;
+                        uploadCanvas.height = img.height;
+                        uploadCtx.drawImage(img, 0, 0);
+                        uploadCanvas.classList.remove('hidden');
+                        
+                        // Utiliser jsQR pour décoder
+                        const imageData = uploadCtx.getImageData(0, 0, uploadCanvas.width, uploadCanvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert",
+                        });
+                        
+                        if (code) {
+                            handleScanResult(code.data);
+                        } else {
+                            displayScanResult("Aucun QR code détecté dans l'image.", false);
+                        }
+                    };
+                    
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+
+            function handleScanResult(result) {
+                // Vérifier si c'est un QR code généré à partir d'une image
+                if (result.startsWith('LOHA-IMG-')) {
+                    const imageData = localStorage.getItem(result);
+                    if (imageData) {
+                        // Afficher directement l'image
+                        const img = new Image();
+                        img.onload = function() {
+                            const resultContent = document.getElementById('resultContent');
+                            resultContent.innerHTML = '';
+                            resultContent.appendChild(img);
+                            
+                            const resultActions = document.getElementById('resultActions');
+                            resultActions.classList.remove('hidden');
+                            
+                            // Configurer le bouton de téléchargement
+                            document.getElementById('copyResultBtn').style.display = 'none';
+                            document.getElementById('openResultBtn').innerHTML = '<i class="fas fa-download"></i> Télécharger';
+                            
+                            document.getElementById('openResultBtn').onclick = function() {
+                                const link = document.createElement('a');
+                                link.href = imageData;
+                                link.download = `loha-image-${result.substring(9)}.png`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            };
+                        };
+                        img.src = imageData;
+                        return;
+                    }
+                }
+                
+                // Pour les autres types de QR codes
+                displayScanResult(result, true);
+            }
+
+            function displayScanResult(result, isSuccess = true) {
+                const resultContent = document.getElementById('resultContent');
+                const resultActions = document.getElementById('resultActions');
+                
+                if (isSuccess) {
+                    resultContent.innerHTML = `<p><strong>Contenu :</strong> ${result}</p>`;
+                    
+                    // Vérifier si c'est une URL
+                    if (result.match(/^https?:\/\//)) {
+                        resultContent.innerHTML += `<p class="url-info">Ce contenu semble être une URL.</p>`;
+                    }
+                    
+                    resultActions.classList.remove('hidden');
+                    
+                    // Configurer les boutons d'action
+                    document.getElementById('copyResultBtn').style.display = 'block';
+                    document.getElementById('copyResultBtn').onclick = function() {
+                        navigator.clipboard.writeText(result).then(() => {
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> Copié !';
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 2000);
+                        });
+                    };
+                    
+                    document.getElementById('openResultBtn').innerHTML = '<i class="fas fa-external-link-alt"></i> Ouvrir';
+                    document.getElementById('openResultBtn').onclick = function() {
+                        if (result.match(/^https?:\/\//)) {
+                            window.open(result, '_blank');
+                        } else {
+                            alert("Ce contenu n'est pas une URL valide.");
+                        }
+                    };
+                } else {
+                    resultContent.innerHTML = `<p class="error">${result}</p>`;
+                    resultActions.classList.add('hidden');
+                }
+            }
+
+            function setupPdfCreation() {
+                const pdfFileInput = document.getElementById('pdfFileInput');
+                const pdfPagesContainer = document.getElementById('pdfPages');
+                const generatePdfBtn = document.getElementById('generatePdfBtn');
+                const clearPdfBtn = document.getElementById('clearPdfBtn');
+                const pdfProgressBar = document.getElementById('pdfProgressBar');
+                const pdfProgress = document.getElementById('pdfProgress');
+                
+                pdfFileInput.addEventListener('change', handlePdfFileUpload);
+                generatePdfBtn.addEventListener('click', generatePdf);
+                clearPdfBtn.addEventListener('click', clearPdfPages);
+                
+                function handlePdfFileUpload(e) {
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+                    
+                    // Vérifier la limite de 1000 pages
+                    if (pdfPages.length + files.length > 1000) {
+                        alert("Vous ne pouvez pas ajouter plus de 1000 pages au total.");
+                        return;
+                    }
+                    
+                    pdfProgressBar.classList.remove('hidden');
+                    pdfProgress.style.width = '0%';
+                    
+                    let processed = 0;
+                    
+                    Array.from(files).forEach((file, index) => {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(event) {
+                            if (file.type === 'application/pdf') {
+                                // TODO: Implémenter l'extraction des pages PDF
+                                alert("L'extraction des pages PDF n'est pas encore implémentée. Veuillez utiliser des images.");
+                                processed++;
+                            } else {
+                                // C'est une image
+                                const img = new Image();
+                                img.onload = function() {
+                                    addPdfPage(img, file.name);
+                                    processed++;
+                                    updateProgress(processed, files.length);
+                                };
+                                img.src = event.target.result;
+                            }
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    });
+                }
+                
+                function addPdfPage(img, filename) {
+                    const pageId = 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    
+                    // Créer un élément de page
+                    const pageElement = document.createElement('div');
+                    pageElement.className = 'pdf-page';
+                    pageElement.dataset.id = pageId;
+                    
+                    // Créer une miniature
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxWidth = 150;
+                    const maxHeight = 200;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Ajouter les actions
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'pdf-page-actions';
+                    
+                    const moveUpBtn = document.createElement('button');
+                    moveUpBtn.className = 'pdf-page-btn';
+                    moveUpBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    moveUpBtn.title = 'Déplacer vers le haut';
+                    moveUpBtn.addEventListener('click', () => movePageUp(pageId));
+                    
+                    const moveDownBtn = document.createElement('button');
+                    moveDownBtn.className = 'pdf-page-btn';
+                    moveDownBtn.innerHTML = '<i class="fas fa-arrow-down"></i>';
+                    moveDownBtn.title = 'Déplacer vers le bas';
+                    moveDownBtn.addEventListener('click', () => movePageDown(pageId));
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'pdf-page-btn';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteBtn.title = 'Supprimer';
+                    deleteBtn.addEventListener('click', () => removePage(pageId));
+                    
+                    actionsDiv.appendChild(moveUpBtn);
+                    actionsDiv.appendChild(moveDownBtn);
+                    actionsDiv.appendChild(deleteBtn);
+                    
+                    pageElement.appendChild(canvas);
+                    pageElement.appendChild(actionsDiv);
+                    
+                    // Ajouter la page à la liste
+                    pdfPages.push({
+                        id: pageId,
+                        element: pageElement,
+                        img: img,
+                        name: filename
+                    });
+                    
+                    // Mettre à jour l'affichage
+                    updatePdfPagesDisplay();
+                    
+                    // Activer le bouton de génération si ce n'est pas déjà fait
+                    if (pdfPages.length > 0) {
+                        generatePdfBtn.disabled = false;
+                    }
+                }
+                
+                function updatePdfPagesDisplay() {
+                    if (pdfPages.length === 0) {
+                        pdfPagesContainer.innerHTML = '<p>Aucune page ajoutée pour le moment.</p>';
+                        generatePdfBtn.disabled = true;
+                        return;
+                    }
+                    
+                    pdfPagesContainer.innerHTML = '';
+                    pdfPages.forEach(page => {
+                        pdfPagesContainer.appendChild(page.element);
+                    });
+                }
+                
+                function updateProgress(processed, total) {
+                    const percentage = Math.round((processed / total) * 100);
+                    pdfProgress.style.width = `${percentage}%`;
+                    
+                    if (processed === total) {
+                        setTimeout(() => {
+                            pdfProgressBar.classList.add('hidden');
+                        }, 1000);
+                    }
+                }
+                
+                function movePageUp(pageId) {
+                    const index = pdfPages.findIndex(p => p.id === pageId);
+                    if (index > 0) {
+                        const temp = pdfPages[index - 1];
+                        pdfPages[index - 1] = pdfPages[index];
+                        pdfPages[index] = temp;
+                        updatePdfPagesDisplay();
+                    }
+                }
+                
+                function movePageDown(pageId) {
+                    const index = pdfPages.findIndex(p => p.id === pageId);
+                    if (index < pdfPages.length - 1) {
+                        const temp = pdfPages[index + 1];
+                        pdfPages[index + 1] = pdfPages[index];
+                        pdfPages[index] = temp;
+                        updatePdfPagesDisplay();
+                    }
+                }
+                
+                function removePage(pageId) {
+                    pdfPages = pdfPages.filter(p => p.id !== pageId);
+                    updatePdfPagesDisplay();
+                }
+                
+                function clearPdfPages() {
+                    if (pdfPages.length === 0 || confirm("Voulez-vous vraiment supprimer toutes les pages ?")) {
+                        pdfPages = [];
+                        updatePdfPagesDisplay();
+                        pdfFileInput.value = '';
+                    }
+                }
+                
+                async function generatePdf() {
+                    if (pdfPages.length === 0) {
+                        alert("Aucune page à convertir en PDF.");
+                        return;
+                    }
+                    
+                    const orientation = document.getElementById('pdfOrientation').value;
+                    const size = document.getElementById('pdfSize').value;
+                    
+                    // Créer un nouveau PDF
+                    const pdf = new jsPDF({
+                        orientation: orientation,
+                        unit: 'mm',
+                        format: size
+                    });
+                    
+                    // Afficher la barre de progression
+                    pdfProgressBar.classList.remove('hidden');
+                    pdfProgress.style.width = '0%';
+                    
+                    try {
+                        // Ajouter chaque page au PDF
+                        for (let i = 0; i < pdfPages.length; i++) {
+                            const page = pdfPages[i];
+                            
+                            // Convertir l'image en données URL
+                            const canvas = document.createElement('canvas');
+                            canvas.width = page.img.width;
+                            canvas.height = page.img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(page.img, 0, 0);
+                            
+                            const imgData = canvas.toDataURL('image/jpeg', 0.8);
+                            
+                            // Ajouter la page au PDF
+                            if (i > 0) {
+                                pdf.addPage(size, orientation);
+                            }
+                            
+                            // Calculer les dimensions pour remplir la page
+                            const pageWidth = pdf.internal.pageSize.getWidth();
+                            const pageHeight = pdf.internal.pageSize.getHeight();
+                            
+                            let imgWidth = pageWidth;
+                            let imgHeight = (page.img.height * pageWidth) / page.img.width;
+                            
+                            if (imgHeight > pageHeight) {
+                                imgHeight = pageHeight;
+                                imgWidth = (page.img.width * pageHeight) / page.img.height;
+                            }
+                            
+                            const x = (pageWidth - imgWidth) / 2;
+                            const y = (pageHeight - imgHeight) / 2;
+                            
+                            pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
+                            
+                            // Mettre à jour la progression
+                            const progress = Math.round(((i + 1) / pdfPages.length) * 100);
+                            pdfProgress.style.width = `${progress}%`;
+                            
+                            // Petite pause pour permettre à l'UI de se mettre à jour
+                            await new Promise(resolve => setTimeout(resolve, 10));
+                        }
+                        
+                        // Télécharger le PDF
+                        pdf.save('loha-document.pdf');
+                        
+                    } catch (error) {
+                        console.error("Erreur lors de la génération du PDF:", error);
+                        alert("Une erreur est survenue lors de la génération du PDF.");
+                    } finally {
+                        setTimeout(() => {
+                            pdfProgressBar.classList.add('hidden');
+                        }, 1000);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
